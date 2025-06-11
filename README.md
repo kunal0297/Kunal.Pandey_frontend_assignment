@@ -154,6 +154,80 @@ yarn dev
 - [Axios](https://axios-http.com/) - HTTP client
 - [dat.GUI](https://github.com/dataarts/dat.gui) - Debug interface
 
+## 🚀 NASA API Integration
+
+The project integrates with multiple NASA APIs to provide real-time space data and imagery:
+
+### APIs Used
+1. **NASA Solar System API**
+   - Endpoint: `api.le-systeme-solaire.net`
+   - Purpose: Fetches detailed planetary data
+   - Data includes: mass, volume, density, gravity, radius, temperature
+
+2. **NASA EPIC API**
+   - Endpoint: `api.nasa.gov/EPIC/api`
+   - Purpose: Retrieves Earth Polychromatic Imaging Camera (EPIC) images
+   - Provides: Latest Earth images from space
+
+3. **NASA APOD API**
+   - Endpoint: `api.nasa.gov/planetary/apod`
+   - Purpose: Fetches Astronomy Picture of the Day
+   - Provides: High-quality space images from Hubble and other sources
+
+### Implementation Details
+```javascript
+// NASA API Service Structure
+class NasaAPI {
+    constructor() {
+        this.apiKey = import.meta.env.VITE_NASA_API_KEY;
+        this.baseURL = 'https://api.nasa.gov';
+        this.solarSystemURL = 'https://api.le-systeme-solaire.net/rest/bodies';
+    }
+
+    // Methods for fetching different types of data
+    async getEarthData() { ... }
+    async getSunData() { ... }
+    async getPlanetData(planetName) { ... }
+}
+```
+
+### Features Enabled by NASA API
+1. **Real-time Planetary Data**
+   - Accurate planet sizes and distances
+   - Current orbital positions
+   - Rotation periods
+   - Physical characteristics
+
+2. **Dynamic Earth Visualization**
+   - Real-time Earth rotation
+   - Current Earth images from space
+   - Atmospheric conditions
+
+3. **Space Imagery**
+   - High-resolution planet textures
+   - Latest space photographs
+   - Historical space images
+
+### Setup Instructions
+1. Get your NASA API key from [api.nasa.gov](https://api.nasa.gov/)
+2. Create a `.env` file in the project root:
+   ```env
+   VITE_NASA_API_KEY=your_api_key_here
+   ```
+3. Restart the development server
+
+### API Usage Examples
+```javascript
+// Fetching planet data
+const planetData = await nasaAPI.getPlanetData('mars');
+
+// Getting Earth images
+const earthImage = await dataFetcher.fetchEarthImage();
+
+// Retrieving Hubble images
+const hubbleImage = await dataFetcher.fetchHubbleImage();
+```
+
 ## 📱 UI Components
 
 ### Side Panel
