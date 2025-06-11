@@ -1,203 +1,172 @@
-import { nasaAPI } from '../services/nasaAPI';
-import { planetData } from '../planetData';
+import { motion, AnimatePresence } from 'framer-motion';
+import styled from '@emotion/styled';
+import NasaAPI from '../services/nasaAPI.js';
+import { planetData } from '../planetData.js';
+import { isMobile } from '../utils/utils.js';
+import { updateUI } from '../utils/ui-animations.js';
+
+const SidePanel = styled(motion.aside)`
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    color: white;
+    z-index: 1000;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const PlanetCard = styled(motion.div)`
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(5px);
+    }
+`;
+
+const InfoCard = styled(motion.div)`
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    max-width: 400px;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const ControlButton = styled(motion.button)`
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+    
+    &:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+`;
 
 export class UI {
-    constructor() {
+    constructor(solarSystem) {
+        this.solarSystem = solarSystem;
+        this.infoCard = null;
+        this.customSpeedInput = null;
+        this.speedSlider = null;
+
+        this.setupUI();
+        this.setupSpeedControlsEventListeners();
+    }
+
+    setupUI() {
+        this.sidePanel = document.querySelector('.side-panel');
+        this.planetsList = document.querySelector('.planets-list');
         this.infoCard = document.getElementById('planet-info');
-        this.planetName = this.infoCard.querySelector('.planet-name');
-        this.planetStats = this.infoCard.querySelector('.planet-stats');
-        this.closeBtn = this.infoCard.querySelector('.close-btn');
-        this.isDarkMode = true;
-        
-        this.init();
-    }
 
-    init() {
-        this.createControlPanel();
-        this.setupEventListeners();
-        this.updateTheme();
-    }
-
-    createControlPanel() {
-        const panel = document.createElement('div');
-        panel.className = 'control-panel';
-        panel.innerHTML = `
-            <div class="panel-header">
-                <h2>Solar System Controls</h2>
-                <button class="theme-toggle">
-                    <span class="theme-icon">🌙</span>
-                </button>
-            </div>
-            <div class="speed-controls">
-                <h3>Simulation Speed</h3>
-                <div class="speed-slider">
-                    <input type="range" min="0.1" max="3" step="0.1" value="1" id="speed-slider">
-                    <span class="speed-value">1x</span>
-                </div>
-            </div>
-            <div class="planet-list">
-                ${planetData.map(planet => this.createPlanetItem(planet)).join('')}
-            </div>
-            <div class="animation-controls">
-                <button class="pause-btn">⏸️ Pause</button>
-                <button class="reset-btn">🔄 Reset</button>
-            </div>
-        `;
-        document.body.appendChild(panel);
-    }
-
-    createPlanetItem(planet) {
-        return `
-            <div class="planet-item" data-planet="${planet.name}">
-                <div class="planet-icon" style="background-color: ${this.getPlanetColor(planet.name)}"></div>
-                <div class="planet-info">
-                    <h3>${planet.name}</h3>
-                    <p>${planet.info.type}</p>
-                </div>
-                <div class="planet-tooltip">
-                    <h4>${planet.name}</h4>
-                    <p>Temperature: ${planet.info.temperature}</p>
-                    <p>Gravity: ${planet.info.gravity}</p>
-                    <button class="focus-btn">Focus</button>
-                </div>
-            </div>
-        `;
-    }
-
-    getPlanetColor(planetName) {
-        const colors = {
-            'Sun': '#ffcc33',
-            'Mercury': '#b6b6b6',
-            'Venus': '#e39e1c',
-            'Earth': '#2b83ff',
-            'Mars': '#c1440e',
-            'Jupiter': '#c99039',
-            'Saturn': '#e3bb76',
-            'Uranus': '#5580aa',
-            'Neptune': '#366896'
-        };
-        return colors[planetName] || '#ffffff';
-    }
-
-    setupEventListeners() {
-        // Close button
-        this.closeBtn.addEventListener('click', () => {
-            this.infoCard.classList.remove('active');
-        });
-
-        // Theme toggle
-        const themeToggle = document.querySelector('.theme-toggle');
-        themeToggle.addEventListener('click', () => {
-            this.isDarkMode = !this.isDarkMode;
-            this.updateTheme();
-        });
-
-        // Speed slider
-        const speedSlider = document.getElementById('speed-slider');
-        const speedValue = document.querySelector('.speed-value');
-        speedSlider.addEventListener('input', (e) => {
-            const speed = parseFloat(e.target.value);
-            speedValue.textContent = `${speed}x`;
-            this.onSpeedChange(speed);
-        });
-
-        // Planet items
-        document.querySelectorAll('.planet-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const planetName = item.dataset.planet;
-                const planet = planetData.find(p => p.name === planetName);
-                if (planet) {
-                    this.showPlanetInfo(planet);
+        const closeBtn = this.infoCard.querySelector('.close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.hidePlanetInfo();
+                if (this.solarSystem) {
+                    this.solarSystem.enableControls();
                 }
             });
-        });
+        }
+    }
 
-        // Focus buttons
-        document.querySelectorAll('.focus-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const planetName = btn.closest('.planet-item').dataset.planet;
-                this.onPlanetFocus(planetName);
+    setupSpeedControlsEventListeners() {
+        this.customSpeedInput = document.getElementById('custom-speed-input');
+        this.speedSlider = document.getElementById('speed-slider');
+
+        if (this.customSpeedInput) {
+            this.customSpeedInput.addEventListener('input', () => {
+                if (this.solarSystem) {
+                    this.solarSystem.setOrbitalSpeedMode(false, parseFloat(this.customSpeedInput.value));
+                }
             });
-        });
+        }
 
-        // Animation controls
-        document.querySelector('.pause-btn').addEventListener('click', (e) => {
-            const btn = e.target;
-            const isPaused = btn.classList.toggle('paused');
-            btn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
-            this.onAnimationToggle(isPaused);
-        });
+        if (this.speedSlider) {
+            this.speedSlider.addEventListener('input', (e) => {
+                if (this.solarSystem) {
+                    const speed = parseFloat(e.target.value);
+                    this.solarSystem.setSimulationSpeed(speed);
+                }
+            });
+        }
 
-        document.querySelector('.reset-btn').addEventListener('click', () => {
-            this.onReset();
+        // Set initial state of speed controls
+        if (this.customSpeedInput && !this.customSpeedInput.value) {
+            this.customSpeedInput.value = '1';
+        }
+    }
+
+    setPlanets(planetsMap) {
+        this.solarSystem.planets = planetsMap;
+        this.updatePlanetsList();
+    }
+
+    updatePlanetsList() {
+        this.planetsList.innerHTML = '';
+        this.solarSystem.planets.forEach((planet, name) => {
+            if (name === 'sun') return;
+
+            const card = document.createElement('div');
+            card.className = 'planet-card';
+            card.innerHTML = `
+                <h3>${name.charAt(0).toUpperCase() + name.slice(1)}</h3>
+                <p>${planet.data.info?.type || 'Celestial Body'}</p>
+            `;
+            card.addEventListener('click', () => this.solarSystem.focusPlanet(name));
+            this.planetsList.appendChild(card);
         });
     }
 
-    updateTheme() {
-        document.body.classList.toggle('dark-mode', this.isDarkMode);
-        document.body.classList.toggle('light-mode', !this.isDarkMode);
+    showPlanetInfo(planetName) {
+        const planet = this.solarSystem.planets.get(planetName.toLowerCase());
+        if (!planet) return;
+
+        const info = planet.data.info;
+        const diameter = planet.data.radius ? (planet.data.radius * 2).toFixed(2) + ' units' : 'N/A';
+        const distanceFromSun = planet.data.distance ? planet.data.distance + ' units' : 'N/A';
+        const orbitalPeriod = info.orbitalPeriod || 'N/A';
+
+        this.infoCard.querySelector('.planet-name').textContent = planetName;
+        this.infoCard.querySelector('.stat:nth-child(1) .value').textContent = diameter;
+        this.infoCard.querySelector('.stat:nth-child(2) .value').textContent = distanceFromSun;
+        this.infoCard.querySelector('.stat:nth-child(3) .value').textContent = orbitalPeriod;
         
-        const themeIcon = document.querySelector('.theme-icon');
-        themeIcon.textContent = this.isDarkMode ? '☀️' : '🌙';
+        this.infoCard.style.display = 'block';
     }
 
-    showPlanetInfo(planet) {
-        this.planetName.textContent = planet.name;
-        this.planetStats.innerHTML = '';
-
-        // Add basic info
-        Object.entries(planet.info).forEach(([key, value]) => {
-            const stat = document.createElement('div');
-            stat.className = 'stat';
-            stat.innerHTML = `
-                <span class="label">${this.formatLabel(key)}</span>
-                <span class="value">${value}</span>
-            `;
-            this.planetStats.appendChild(stat);
-        });
-
-        // Add real-time data for Earth
-        if (planet.name === 'Earth') {
-            this.updateEarthData();
-        }
-
-        this.infoCard.classList.add('active');
-    }
-
-    async updateEarthData() {
-        const earthData = await nasaAPI.getEarthData();
-        if (earthData) {
-            const stat = document.createElement('div');
-            stat.className = 'stat real-time';
-            stat.innerHTML = `
-                <span class="label">Real-time Distance</span>
-                <span class="value">${(earthData.distance / 1000000).toFixed(2)} million km</span>
-            `;
-            this.planetStats.appendChild(stat);
+    hidePlanetInfo() {
+        if (this.infoCard) {
+            this.infoCard.style.display = 'none';
         }
     }
 
-    formatLabel(key) {
-        return key
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, str => str.toUpperCase());
-    }
-
-    // Event callbacks (to be implemented by the main application)
-    onSpeedChange(speed) {
-        // Implement in main.js
-    }
-
-    onPlanetFocus(planetName) {
-        // Implement in main.js
-    }
-
-    onAnimationToggle(isPaused) {
-        // Implement in main.js
-    }
-
-    onReset() {
-        // Implement in main.js
+    updatePauseButton(isPaused) {
+        const pauseBtn = document.getElementById('pause-toggle');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = `<i class="fas fa-${isPaused ? 'play' : 'pause'}"></i>`;
+        }
     }
 } 

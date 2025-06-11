@@ -1,32 +1,34 @@
 import * as THREE from 'three';
-import { nasaAPI } from '../services/nasaAPI';
+import NasaAPI from '../services/nasaAPI';
 import { loadingManager } from '../utils/LoadingManager';
 
-export class Planet {
-    constructor(data) {
+export default class Planet {
+    constructor(data, nasaAPI) {
         this.data = data;
+        this.nasaAPI = nasaAPI;
         this.mesh = null;
         this.clouds = null;
         this.atmosphere = null;
         this.rings = null;
         this.orbit = null;
-        this.isEarth = data.name === 'Earth';
-        this.isVenus = data.name === 'Venus';
-        this.isSaturn = data.name === 'Saturn';
-        
-        this.init();
+        this.isEarth = data.name.toLowerCase() === 'earth';
+        this.isVenus = data.name.toLowerCase() === 'venus';
+        this.isSaturn = data.name.toLowerCase() === 'saturn';
+        this.orbitalTime = 0;
     }
 
     async init() {
         try {
             console.log(`Initializing planet: ${this.data.name} with radius: ${this.data.radius}`);
-            const geometry = new THREE.SphereGeometry(this.data.radius, 64, 64);
+            const geometry = new THREE.SphereGeometry(this.data.radius, 128, 128);
             const textureLoader = new THREE.TextureLoader(loadingManager);
             
-            // Load textures
+            // Load textures with improved settings
             const texture = await this.loadTexture(textureLoader, this.data.texture);
-            console.log(`Texture for ${this.data.name} loaded:`, texture);
             texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 16;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
             
             // Create materials based on planet type
             let material;
@@ -37,30 +39,39 @@ export class Planet {
                     emissive: new THREE.Color(0xffff00),
                     emissiveIntensity: 1,
                     metalness: 0,
-                    roughness: 1
+                    roughness: 1,
+                    envMapIntensity: 1
                 });
             } else {
                 material = new THREE.MeshStandardMaterial({
                     map: texture,
+                    color: 0xAAAAAA, // Fallback color in case texture fails to load
                     roughness: 0.7,
                     metalness: 0.1,
-                    bumpScale: 0.05
+                    bumpScale: 0.05,
+                    envMapIntensity: 0.5
                 });
 
-                // Add bump map for terrain
+                // Add bump map for terrain with improved settings
                 if (this.data.bumpMap) {
                     const bumpTexture = await this.loadTexture(textureLoader, this.data.bumpMap);
+                    bumpTexture.anisotropy = 16;
                     material.bumpMap = bumpTexture;
+                    material.bumpScale = 0.1;
                 }
 
-                // Add specular map for clouds (Earth)
+                // Add specular map for clouds (Earth) with improved settings
                 if (this.data.specularMap) {
                     const specularTexture = await this.loadTexture(textureLoader, this.data.specularMap);
+                    specularTexture.anisotropy = 16;
                     material.roughnessMap = specularTexture;
+                    material.roughness = 0.5;
                 }
             }
 
             this.mesh = new THREE.Mesh(geometry, material);
+            this.mesh.castShadow = true;
+            this.mesh.receiveShadow = true;
             console.log(`Mesh created for ${this.data.name}:`, this.mesh);
             this.mesh.userData = {
                 name: this.data.name,
@@ -296,53 +307,79 @@ export class Planet {
         this.orbit.rotation.x = Math.PI / 2;
     }
 
-    async updatePosition(deltaTime, simulationSpeed) {
+    async updatePosition(time, simulationSpeed, isRealTimeMode, customSpeedFactor, planetsMap) {
         // Sun is always at the center, so no position update needed for sun
         if (this.data.name === 'Sun') {
             this.mesh.position.set(0, 0, 0);
             return;
         }
 
+        let calculatedPosition;
+
+        if (this.data.name === 'Moon') {
+            const earth = planetsMap.get('earth');
+            if (earth && earth.mesh) {
+                // Moon orbits Earth, so its position is relative to Earth's position
+                const moonRelativePosition = this.nasaAPI.calculatePlanetPosition(
+                    this.data,
+                    time,
+                    isRealTimeMode,
+                    customSpeedFactor
+                );
+                calculatedPosition = new THREE.Vector3(
+                    earth.mesh.position.x + moonRelativePosition.x,
+                    earth.mesh.position.y + moonRelativePosition.y,
+                    earth.mesh.position.z + moonRelativePosition.z
+                );
+            } else {
+                console.warn(`Earth not found for Moon's orbit calculation.`);
+                return;
+            }
+        } else {
+            // Calculate position for other planets
+            calculatedPosition = this.nasaAPI.calculatePlanetPosition(
+                this.data,
+                time,
+                isRealTimeMode,
+                customSpeedFactor
+            );
+        }
+
+        // Update Earth's rotation if this is Earth
         if (this.isEarth) {
-            // Update Earth's rotation based on real-time
-            const rotationAngle = nasaAPI.calculateEarthRotation();
+            const rotationAngle = this.nasaAPI.calculateEarthRotation();
             this.mesh.rotation.y = THREE.MathUtils.degToRad(rotationAngle);
             
             if (this.clouds) {
-                this.clouds.rotation.y = THREE.MathUtils.degToRad(rotationAngle * 1.1); // Clouds rotate slightly faster
+                this.clouds.rotation.y = THREE.MathUtils.degToRad(rotationAngle * 1.1);
             }
         }
 
-        // Update planet position based on real-time data
-        // Use a consistent time source for orbital calculations to avoid NaN and ensure smooth motion.
-        // We'll use a simple time counter within the planet instance.
-        this.orbitalTime = (this.orbitalTime || 0) + (deltaTime * simulationSpeed);
-
-        const position = nasaAPI.calculatePlanetPosition(this.data, this.orbitalTime);
-        console.log(`Calculated position for ${this.data.name}: x=${position.x}, y=${position.y}, z=${position.z}`);
-        this.mesh.position.set(position.x, position.y, position.z);
-        console.log(`Final mesh position for ${this.data.name}: x=${this.mesh.position.x}, y=${this.mesh.position.y}, z=${this.mesh.position.z}`);
+        // Set the position if it's valid
+        if (calculatedPosition && !isNaN(calculatedPosition.x) && !isNaN(calculatedPosition.y) && !isNaN(calculatedPosition.z)) {
+            this.mesh.position.set(calculatedPosition.x, calculatedPosition.y, calculatedPosition.z);
+        } else {
+            console.warn(`Invalid position calculated for ${this.data.name}:`, calculatedPosition);
+        }
     }
 
-    update(deltaTime, simulationSpeed = 1) {
-        // Always update position for all planets except Sun (Sun handled in updatePosition)
-        this.updatePosition(deltaTime, simulationSpeed);
+    update(time, simulationSpeed = 1, isRealTimeMode, customSpeedFactor, planetsMap) {
+        // Update position for all planets except Sun
+        this.updatePosition(time, simulationSpeed, isRealTimeMode, customSpeedFactor, planetsMap);
 
         if (!this.isEarth) {
             // Update non-Earth planets' rotation
-            this.mesh.rotation.y += this.data.rotationSpeed * deltaTime * simulationSpeed;
+            const rotationSpeed = this.data.rotationSpeed * simulationSpeed;
+            this.mesh.rotation.y += rotationSpeed * 0.01; // Scale down rotation speed
             
             // Update Venus atmosphere rotation
             if (this.isVenus && this.atmosphere) {
-                this.atmosphere.rotation.y += this.data.rotationSpeed * deltaTime * 0.8 * simulationSpeed;
+                this.atmosphere.rotation.y += rotationSpeed * 0.8 * 0.01;
             }
 
             // Update Saturn's rings
             if (this.isSaturn && this.rings) {
-                // Update shader time uniform for animation
-                this.rings.material.uniforms.time.value += deltaTime * simulationSpeed;
-                
-                // Add slight wobble to rings
+                this.rings.material.uniforms.time.value += 0.01 * simulationSpeed;
                 const wobble = Math.sin(this.rings.material.uniforms.time.value * 0.2) * 0.02;
                 this.rings.rotation.x = THREE.MathUtils.degToRad(this.data.rings.rotation.x) + wobble;
             }

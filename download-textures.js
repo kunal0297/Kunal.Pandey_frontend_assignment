@@ -1,39 +1,38 @@
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
-const textures = {
-    'earth': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
-    'mars': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mars_1k_color.jpg',
-    'jupiter': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter2_1024.jpg',
-    'saturn': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn.jpg',
-    'neptune': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/neptune.jpg',
-    'uranus': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/uranus.jpg',
-    'venus': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/venus.jpg',
-    'mercury': 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mercury.jpg'
+const TEXTURES = {
+  mercury: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mercury.jpg',
+  venus: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/venus.jpg',
+  earth: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth.jpg',
+  mars: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mars.jpg',
+  jupiter: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter.jpg',
+  saturn: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn.jpg',
+  uranus: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/uranus.jpg',
+  neptune: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/neptune.jpg'
 };
 
-const downloadTexture = (url, filename) => {
-    return new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(path.join('public', 'textures', filename));
-        https.get(url, (response) => {
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close();
-                console.log(`Downloaded ${filename}`);
-                resolve();
-            });
-        }).on('error', (err) => {
-            fs.unlink(filename);
-            reject(err);
-        });
-    });
-};
+const texturesDir = path.join(__dirname, 'public', 'textures');
 
-async function downloadAllTextures() {
-    for (const [planet, url] of Object.entries(textures)) {
-        await downloadTexture(url, `${planet}.jpg`);
-    }
+// Create textures directory if it doesn't exist
+if (!fs.existsSync(texturesDir)) {
+  fs.mkdirSync(texturesDir, { recursive: true });
 }
 
-downloadAllTextures().catch(console.error); 
+// Download each texture
+Object.entries(TEXTURES).forEach(([planet, url]) => {
+  const filePath = path.join(texturesDir, `${planet}.jpg`);
+  
+  https.get(url, (response) => {
+    const file = fs.createWriteStream(filePath);
+    response.pipe(file);
+    
+    file.on('finish', () => {
+      file.close();
+      console.log(`Downloaded ${planet} texture`);
+    });
+  }).on('error', (err) => {
+    console.error(`Error downloading ${planet} texture:`, err.message);
+  });
+}); 

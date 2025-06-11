@@ -1,0 +1,249 @@
+// Variables
+$primary-color: #2b83ff;
+$secondary-color: #ffcc33;
+$background-dark: rgba(0, 0, 0, 0.8);
+$background-light: rgba(255, 255, 255, 0.1);
+$text-color: #ffffff;
+$border-color: rgba(255, 255, 255, 0.1);
+$transition-speed: 0.3s;
+
+// Mixins
+@mixin glass-effect {
+    background: $background-dark;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid $border-color;
+}
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Side Panel
+.side-panel {
+    @include glass-effect;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    padding: 20px;
+    color: $text-color;
+    z-index: 1000;
+    transition: transform $transition-speed ease;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            background: linear-gradient(45deg, $primary-color, $secondary-color);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: $text-color;
+            cursor: pointer;
+            font-size: 20px;
+            transition: transform $transition-speed ease;
+
+            &:hover {
+                transform: rotate(180deg);
+            }
+        }
+    }
+}
+
+// Planet Cards
+.planets-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    .planet-card {
+        @include glass-effect;
+        border-radius: 12px;
+        padding: 15px;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: all $transition-speed ease;
+
+        &:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+        }
+
+        p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    }
+}
+
+// Controls
+.controls {
+    width: 100%;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+    background: $background-dark;
+
+    .control-btn {
+        @include glass-effect;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        color: $text-color;
+        cursor: pointer;
+        @include flex-center;
+        margin: 5px;
+        transition: all $transition-speed ease;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+    }
+
+    .speed-control {
+        margin-top: 15px;
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: $background-light;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+
+            &::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 16px;
+                height: 16px;
+                background: $primary-color;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: all $transition-speed ease;
+
+                &:hover {
+                    transform: scale(1.2);
+                }
+            }
+        }
+    }
+}
+
+// Info Card
+.info-card {
+    @include glass-effect;
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    border-radius: 15px;
+    padding: 20px;
+    color: $text-color;
+    max-width: 400px;
+    z-index: 1000;
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: $text-color;
+        cursor: pointer;
+        font-size: 18px;
+        opacity: 0.8;
+        transition: opacity $transition-speed ease;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .info-content {
+        h2 {
+            margin: 0 0 15px 0;
+            font-size: 24px;
+            background: linear-gradient(45deg, $primary-color, $secondary-color);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .planet-stats {
+            .stat {
+                display: flex;
+                justify-content: space-between;
+                margin: 10px 0;
+                padding: 10px;
+                background: $background-light;
+                border-radius: 8px;
+
+                .label {
+                    font-weight: 500;
+                }
+
+                .value {
+                    opacity: 0.8;
+                }
+            }
+        }
+    }
+}
+
+// Animations
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn $transition-speed ease forwards;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+    .side-panel {
+        transform: translateX(-100%);
+
+        &.active {
+            transform: translateX(0);
+        }
+    }
+
+    .info-card {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+} 

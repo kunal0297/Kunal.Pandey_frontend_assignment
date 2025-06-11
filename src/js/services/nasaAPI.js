@@ -2,9 +2,25 @@ import axios from 'axios';
 
 class NasaAPI {
     constructor() {
-        this.apiKey = import.meta.env.VITE_NASA_API_KEY;
+        this.apiKey = 'q1T3xI2vSxmmFgjDD628gld32e5uMkpYeabnKiKI';
         this.baseURL = 'https://api.nasa.gov';
         this.solarSystemURL = 'https://api.le-systeme-solaire.net/rest/bodies';
+        this.epicURL = 'https://api.nasa.gov/EPIC/api/natural/available';
+        this.apodURL = 'https://api.nasa.gov/planetary/apod';
+    }
+
+    async init() {
+        try {
+            // Fetch initial data for all planets
+            const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+            const planetData = await Promise.all(
+                planets.map(planet => this.getPlanetData(planet))
+            );
+            return planetData;
+        } catch (error) {
+            console.error('Error initializing NASA API:', error);
+            return null;
+        }
     }
 
     async getEarthData() {
@@ -30,9 +46,52 @@ class NasaAPI {
     async getPlanetData(planetName) {
         try {
             const response = await axios.get(`${this.solarSystemURL}/${planetName.toLowerCase()}`);
-            return this.processPlanetData(response.data);
+            const data = response.data;
+            
+            // Get additional data from NASA APIs
+            const [epicData, apodData] = await Promise.all([
+                this.getEPICData(),
+                this.getAPODData()
+            ]);
+
+            return {
+                ...this.processPlanetData(data),
+                epicImage: epicData?.image,
+                apodImage: apodData?.url,
+                lastUpdated: new Date().toISOString()
+            };
         } catch (error) {
             console.error(`Error fetching ${planetName} data:`, error);
+            return null;
+        }
+    }
+
+    async getEPICData() {
+        try {
+            const response = await axios.get(`${this.epicURL}`);
+            const dates = response.data;
+            const latestDate = dates[0];
+            
+            const imageResponse = await axios.get(`${this.epicURL}/${latestDate}`);
+            const images = imageResponse.data;
+            const latestImage = images[0];
+            
+            return {
+                image: `https://epic.gsfc.nasa.gov/archive/natural/${latestDate.split('-').join('/')}/png/${latestImage.image}.png`,
+                date: latestDate
+            };
+        } catch (error) {
+            console.error('Error fetching EPIC data:', error);
+            return null;
+        }
+    }
+
+    async getAPODData() {
+        try {
+            const response = await axios.get(`${this.apodURL}?api_key=${this.apiKey}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching APOD data:', error);
             return null;
         }
     }
@@ -64,6 +123,7 @@ class NasaAPI {
 
     processPlanetData(data) {
         return {
+            name: data.name,
             distance: data.semimajorAxis,
             rotationPeriod: data.sideralOrbit,
             orbitalPeriod: data.sideralRotation,
@@ -72,7 +132,12 @@ class NasaAPI {
             density: data.density,
             gravity: data.gravity,
             meanRadius: data.meanRadius,
-            temperature: data.temperature
+            temperature: data.temperature,
+            discoveredBy: data.discoveredBy,
+            discoveryDate: data.discoveryDate,
+            moons: data.moons,
+            isPlanet: data.isPlanet,
+            alternativeName: data.alternativeName
         };
     }
 
@@ -82,31 +147,21 @@ class NasaAPI {
         const minutes = now.getUTCMinutes();
         const seconds = now.getUTCSeconds();
         
-        // Calculate rotation angle based on current time
-        // Earth rotates 360 degrees in 24 hours
         const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-        return (totalSeconds / 86400) * 360; // Convert to degrees
+        return (totalSeconds / 86400) * 360;
     }
 
-    calculatePlanetPosition(planetData, time = Date.now()) {
-        // Sun is always at the center
+    calculatePlanetPosition(planetData, time = Date.now(), isRealTimeMode = false, customSpeedFactor = 1) {
         if (planetData.name === 'Sun') {
             return { x: 0, y: 0, z: 0 };
         }
 
-        const { distance, orbitalSpeed } = planetData;
+        // Convert time to seconds and calculate angle based on orbital speed
+        const timeInSeconds = time / 1000;
+        const baseSpeed = planetData.orbitalSpeed || 1;
+        const angle = (timeInSeconds * baseSpeed * customSpeedFactor) % (2 * Math.PI);
 
-        // Ensure orbitalSpeed is a valid number to prevent NaN in position
-        if (typeof orbitalSpeed !== 'number' || isNaN(orbitalSpeed) || orbitalSpeed === 0) {
-            console.warn(`Invalid orbitalSpeed for ${planetData.name}: ${orbitalSpeed}. Defaulting position to 0.`);
-            return { x: 0, y: 0, z: 0 };
-        }
-
-        // Calculate angle based on time and orbitalSpeed
-        // Assuming orbitalSpeed is a factor that dictates the speed of orbit
-        const angle = (time * orbitalSpeed / 1000) * Math.PI * 2; // Scale time by orbital speed, adjust 1000 for speed if needed
-        
-        console.log(`Angle for ${planetData.name}: ${angle}`);
+        const { distance } = planetData;
 
         return {
             x: Math.cos(angle) * distance,
@@ -114,6 +169,26 @@ class NasaAPI {
             z: Math.sin(angle) * distance
         };
     }
+
+    async fetchApod() {
+        try {
+            const response = await fetch(`${this.apodURL}?api_key=${this.apiKey}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching APOD:', error);
+            throw error;
+        }
+    }
+
+    async fetchEpicDates() {
+        try {
+            const response = await fetch(`${this.epicURL}?api_key=${this.apiKey}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching EPIC dates:', error);
+            throw error;
+        }
+    }
 }
 
-export const nasaAPI = new NasaAPI(); 
+export default NasaAPI; 

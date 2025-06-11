@@ -1,6 +1,6 @@
 class DataFetcher {
     constructor() {
-        this.NASA_API_KEY = 'DEMO_KEY'; // Replace with your NASA API key
+        this.NASA_API_KEY = 'q1T3xI2vSxmmFgjDD628gld32e5uMkpYeabnKiKI';
         this.SOLAR_SYSTEM_API = 'https://api.le-systeme-solaire.net/rest.php';
         this.EPIC_API = 'https://api.nasa.gov/EPIC/api';
     }
@@ -41,6 +41,17 @@ class DataFetcher {
         } catch (error) {
             console.error('Error fetching Hubble image:', error);
             return null;
+        }
+    }
+
+    async fetchNasaApod() {
+        try {
+            const response = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${this.NASA_API_KEY}`);
+            const data = await response.json();
+            return data.hdurl || data.url;
+        } catch (error) {
+            console.error('Error fetching NASA APOD:', error);
+            throw error;
         }
     }
 
