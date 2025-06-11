@@ -94,26 +94,37 @@ graph TD
 
 ## ✨ Features
 
-### 🎮 Interactive 3D Visualization
-- Realistic 3D models of planets and celestial bodies
-- Smooth orbital animations
-- Interactive camera controls
-- Dynamic lighting and shadows
-- Realistic space environment
+- Interactive 3D solar system visualization
+- Modern UI with dark/light mode
+- Responsive design for all devices
+- Planet information cards
+- Simulation speed control
+- Beautiful star field background
+- Orbit visualization
+- Planet selection and camera focus
 
-### 🎨 Modern UI/UX
-- Clean, minimalist design
-- Dark/Light theme toggle
-- Responsive layout for all devices
-- Smooth animations and transitions
-- Intuitive controls and navigation
+### 🔗 NASA API Integration
 
-### 🛠️ Technical Features
-- Real-time planet information display
-- Customizable simulation speed
-- Pause/Resume functionality
-- Detailed planet statistics
-- Interactive planet selection
+This project includes code for integrating NASA and Solar System APIs to fetch real-time planetary data and space imagery. 
+
+**Purpose:**
+- Fetches up-to-date planet statistics (mass, volume, gravity, etc.)
+- Retrieves Earth and space images (EPIC, APOD)
+- Enables dynamic, data-driven visualization
+
+**Where is it used?**
+- `src/js/services/nasaAPI.js` — Main NASA API service (functions: `getPlanetData`, `getEarthData`, `getSunData`)
+- `src/js/services/DataFetcher.js` — Additional data/image fetching (functions: `fetchPlanetData`, `fetchEarthImage`, `fetchHubbleImage`)
+
+**Current Status:**
+- The code is scaffolded and ready for use. To activate, add your NASA API key to a `.env` file as described in the Setup section.
+- If no API key is provided, the app will use static or fallback data.
+
+**Example Usage:**
+```js
+import { nasaAPI } from './services/nasaAPI';
+const marsData = await nasaAPI.getPlanetData('mars');
+```
 
 ## 🚀 Getting Started
 
@@ -316,5 +327,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
-Project Link: [https://github.com/yourusername/solar-system-dashboard](https://github.com/yourusername/solar-system-dashboard)
+Your Name - [@kunal](kunalpandey0297@gmail.com)
+Project Link: [@https://github.com/kunal0297/Kunal.Pandey_frontend_assignment](@https://github.com/kunal0297/Kunal.Pandey_frontend_assignment )
