@@ -4,6 +4,94 @@ An immersive, interactive 3D solar system visualization with a modern, responsiv
 
 ![Solar System Dashboard](https://i.imgur.com/placeholder.png)
 
+## 📋 System Context
+
+### Directory Structure
+```
+Kunal.Pandey_frontend_assignment
+├── public
+│   └── textures
+│       ├── earth_bump.jpeg
+│       ├── earth_clouds.jpg
+│       ├── earth_specular.jpg
+│       ├── earth.jpg
+│       ├── jupiter.jpg
+│       ├── mars_bump.jpg
+│       ├── mars.jpg
+│       ├── mercury.jpg
+│       ├── moon.jpg
+│       ├── neptune.jpg
+│       ├── saturn_rings.png
+│       ├── saturn.jpg
+│       ├── sun.jpg
+│       ├── uranus.jpg
+│       ├── venus_atmosphere.png
+│       └── venus_surface.jpg
+├── src
+│   ├── js
+│   │   ├── effects
+│   │   │   └── starField.js
+│   │   ├── objects
+│   │   │   ├── orbit.js
+│   │   │   └── planet.js
+│   │   ├── services
+│   │   │   ├── DataFetcher.js
+│   │   │   └── nasaAPI.js
+│   │   ├── ui
+│   │   │   └── UI.js
+│   │   ├── utils
+│   │   │   └── LoadingManager.js
+│   │   ├── main.js
+│   │   ├── planetData.js
+│   │   └── scene.js
+│   ├── styles
+│   │   └── main.scss
+│   └── index.html
+├── download-textures.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── README.md
+└── vite.config.js
+```
+
+### System Architecture
+```mermaid
+graph TD
+
+    1987["User<br>External Actor"]
+    subgraph 1974["External Systems"]
+        1986["NASA APIs<br>NASA"]
+    end
+    subgraph 1975["Solar System Visualizer<br>Vite / JavaScript"]
+        1976["Web Page<br>HTML"]
+        1977["Application Core<br>JavaScript"]
+        1978["3D Scene Manager<br>JavaScript"]
+        1979["Solar System Objects<br>JavaScript"]
+        1980["Visual Effects<br>JavaScript"]
+        1981["UI Controls<br>JavaScript"]
+        1982["Asset Loader<br>JavaScript"]
+        1983["Texture Assets<br>Image Files"]
+        1984["Planet Static Data<br>JavaScript Object"]
+        1985["NASA API Client<br>JavaScript"]
+        %% Edges at this level (grouped by source)
+        1976["Web Page<br>HTML"] -->|Loads| 1977["Application Core<br>JavaScript"]
+        1977["Application Core<br>JavaScript"] -->|Initializes| 1978["3D Scene Manager<br>JavaScript"]
+        1977["Application Core<br>JavaScript"] -->|Manages| 1979["Solar System Objects<br>JavaScript"]
+        1977["Application Core<br>JavaScript"] -->|Initializes &amp;<br>Handles Events from| 1981["UI Controls<br>JavaScript"]
+        1977["Application Core<br>JavaScript"] -->|Uses| 1984["Planet Static Data<br>JavaScript Object"]
+        1977["Application Core<br>JavaScript"] -->|Fetches details via| 1985["NASA API Client<br>JavaScript"]
+        1978["3D Scene Manager<br>JavaScript"] -->|Renders| 1979["Solar System Objects<br>JavaScript"]
+        1978["3D Scene Manager<br>JavaScript"] -->|Applies| 1980["Visual Effects<br>JavaScript"]
+        1978["3D Scene Manager<br>JavaScript"] -->|Updates| 1981["UI Controls<br>JavaScript"]
+        1979["Solar System Objects<br>JavaScript"] -->|Uses for Textures| 1982["Asset Loader<br>JavaScript"]
+        1982["Asset Loader<br>JavaScript"] -->|Loads| 1983["Texture Assets<br>Image Files"]
+    end
+    %% Edges at this level (grouped by source)
+    1987["User<br>External Actor"] -->|Interacts with| 1976["Web Page<br>HTML"]
+    1985["NASA API Client<br>JavaScript"] -->|Calls| 1986["NASA APIs<br>NASA"]
+```
+
 ## ✨ Features
 
 ### 🎮 Interactive 3D Visualization
