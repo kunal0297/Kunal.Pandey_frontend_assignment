@@ -5,7 +5,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import '../styles/SolarSystem.scss';
 
-const NASA_API_KEY = 'q1T3xI2vSxmmFgjDD628gld32e5uMkpYeabnKiKI';
+const NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY;
 const PLANET_DATA = {
   mercury: { radius: 0.4, distance: 5, speed: 4.1, texture: '/textures/mercury.jpg' },
   venus: { radius: 0.9, distance: 7, speed: 1.6, texture: '/textures/venus.jpg' },

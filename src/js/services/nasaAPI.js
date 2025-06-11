@@ -2,7 +2,7 @@ import axios from 'axios';
 
 class NasaAPI {
     constructor() {
-        this.apiKey = 'q1T3xI2vSxmmFgjDD628gld32e5uMkpYeabnKiKI';
+        this.apiKey = import.meta.env.VITE_NASA_API_KEY;
         this.baseURL = 'https://api.nasa.gov';
         this.solarSystemURL = 'https://api.le-systeme-solaire.net/rest/bodies';
         this.epicURL = 'https://api.nasa.gov/EPIC/api/natural/available';

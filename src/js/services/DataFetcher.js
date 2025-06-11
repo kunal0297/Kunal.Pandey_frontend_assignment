@@ -1,6 +1,6 @@
 class DataFetcher {
     constructor() {
-        this.NASA_API_KEY = 'q1T3xI2vSxmmFgjDD628gld32e5uMkpYeabnKiKI';
+        this.NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY;
         this.SOLAR_SYSTEM_API = 'https://api.le-systeme-solaire.net/rest.php';
         this.EPIC_API = 'https://api.nasa.gov/EPIC/api';
     }

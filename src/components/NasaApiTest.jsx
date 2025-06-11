@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../styles/NasaApiTest.scss';
 
-const NASA_API_KEY = 'q1T3xI2vSxmmFgjDD628gld32e5uMkpYeabnKiKI';
+const NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY;
 
 const NasaApiTest = () => {
   const [apodData, setApodData] = useState(null);
