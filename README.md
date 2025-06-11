@@ -242,5 +242,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
-Project Link: [https://github.com/yourusername/solar-system-dashboard](https://github.com/yourusername/solar-system-dashboard)
+Your Name - [@kunal](kunalpandey0297@gmail.com)
+Project Link: [@https://github.com/kunal0297/Kunal.Pandey_frontend_assignment](@https://github.com/kunal0297/Kunal.Pandey_frontend_assignment )
